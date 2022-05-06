@@ -218,20 +218,27 @@ HTTP::SecureHeaders - manage security headers with many safe defaults
 =head1 SYNOPSIS
 
     use HTTP::SecureHeaders;
+    use Plack::Util;
 
-    my $headers = Plack::Util::headers([]);
+    my $secure_headers = HTTP::SecureHeaders->new(
+        'content_security_policy' => "default-src 'self' https:",
+    );
+
+    my $data = [];
+    my $headers = Plack::Util::headers($data);
+
     $secure_headers->apply($headers);
 
-Then it sets the following HTTP headers.
-
-    Content-Security-Policy
-    Strict-Transport-Security
-    X-Content-Type-Options
-    X-Download-Options
-    X-Frame-Options
-    X-Permitted-Cross-Domain-Policies
-    X-XSS-Protection
-    Referrer-Policy
+    $data
+    # =>
+    #    'Content-Security-Policy'           => "default-src 'self' https:",
+    #    'Strict-Transport-Security'         => 'max-age=631138519',
+    #    'X-Content-Type-Options'            => 'nosniff',
+    #    'X-Download-Options'                => 'noopen',
+    #    'X-Frame-Options'                   => 'SAMEORIGIN',
+    #    'X-Permitted-Cross-Domain-Policies' => 'none',
+    #    'X-XSS-Protection'                  => '1; mode=block',
+    #    'Referrer-Policy'                   => 'strict-origin-when-cross-origin',
 
 =head1 DESCRIPTION
 
