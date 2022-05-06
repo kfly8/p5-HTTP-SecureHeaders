@@ -43,14 +43,15 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
+            "Scalar::Util" : "0",
             "perl" : "5.008001"
          }
       },
       "test" : {
          "requires" : {
             "Module::Build::Tiny" : "0.035",
-            "Plack" : "0",
-            "Test::More" : "0.98"
+            "Test::More" : "0.98",
+            "Test::Requires" : "0.06"
          }
       }
    },

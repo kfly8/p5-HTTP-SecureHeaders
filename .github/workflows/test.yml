@@ -19,7 +19,8 @@ jobs:
             "5.16",
             "5.14",
             "5.12",
-            "5.10"
+            "5.10",
+            "5.08"
           ]
     name: Perl ${{ matrix.perl }}
     steps:
@@ -31,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: |
           cpanm -nq --installdeps --with-develop --with-recommends .
+      - name: Install optional deps
+        run: |
+          cpanm -nq HTTP::Headers
+          cpanm -nq HTTP::Headers::Fast
+          cpanm -nq Plack
       - name: Build
         run: |
           perl Build.PL
