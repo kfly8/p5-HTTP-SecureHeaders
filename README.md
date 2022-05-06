@@ -7,22 +7,27 @@ HTTP::SecureHeaders - manage security headers with many safe defaults
 
 ```perl
 use HTTP::SecureHeaders;
+use Plack::Util;
 
-my $headers = Plack::Util::headers([]);
+my $secure_headers = HTTP::SecureHeaders->new(
+    'content_security_policy' => "default-src 'self' https:",
+);
+
+my $data = [];
+my $headers = Plack::Util::headers($data);
+
 $secure_headers->apply($headers);
-```
 
-Then it sets the following HTTP headers.
-
-```
-Content-Security-Policy
-Strict-Transport-Security
-X-Content-Type-Options
-X-Download-Options
-X-Frame-Options
-X-Permitted-Cross-Domain-Policies
-X-XSS-Protection
-Referrer-Policy
+$data
+# =>
+#    'Content-Security-Policy'           => "default-src 'self' https:",
+#    'Strict-Transport-Security'         => 'max-age=631138519',
+#    'X-Content-Type-Options'            => 'nosniff',
+#    'X-Download-Options'                => 'noopen',
+#    'X-Frame-Options'                   => 'SAMEORIGIN',
+#    'X-Permitted-Cross-Domain-Policies' => 'none',
+#    'X-XSS-Protection'                  => '1; mode=block',
+#    'Referrer-Policy'                   => 'strict-origin-when-cross-origin',
 ```
 
 # DESCRIPTION
@@ -70,6 +75,43 @@ This default value refers to the following sites [https://github.com/github/secu
 
     Apply the value of the secure header to the given header object.
 
+    HTTP header already set in $headers are not applied:
+
+    ```perl
+    my $secure_headers = HTTP::SecureHeaders->new(
+        'x_frame_options' => 'SAMEORIGIN',
+    );
+
+    my $res = Plack::Response->new;
+    $res->header('X-Frame-Options', 'DENY');
+
+    $secure_headers->apply($res->headers);
+    $res->header('X-Frame-Options') # => DENY
+    ```
+
+# FAQ
+
+- How do you remove HTTP header?
+
+    Please set undef to HTTP header you want to remove:
+
+    ```perl
+    my $secure_headers = HTTP::SecureHeaders->new(
+        content_security_policy => undef,
+    );
+
+    my $res = Plack::Response->new;
+
+    $secure_headers->apply($res->headers);
+
+    $res->header('Content-Security-Policy'); # => undef
+    ```
+
+# SEE ALSO
+
+- [https://github.com/github/secure\_headers](https://github.com/github/secure_headers)
+- [https://cheatsheetseries.owasp.org/cheatsheets/HTTP\_Headers\_Cheat\_Sheet.html](https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html)
+
 # LICENSE
 
 Copyright (C) kfly8.
@@ -80,3 +122,11 @@ it under the same terms as Perl itself.
 # AUTHOR
 
 kfly8 <kfly@cpan.org>
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 319:
+
+    You forgot a '=back' before '=head1'
