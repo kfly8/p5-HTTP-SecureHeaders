@@ -29,6 +29,8 @@ our %HTTP_FIELD_MAP = (
     referrer_policy                   => 'Referrer-Policy',
 );
 
+use constant OPT_OUT => \"";
+
 sub new {
     my ($class, %args) = @_;
 
@@ -71,16 +73,26 @@ sub _apply {
     my $http_field = $HTTP_FIELD_MAP{$field};
 
     unless (Scalar::Util::blessed($headers)) {
-        Carp::croak sprintf('headers must be HTTP::Headers or HasMethods["exists","set"]. %s', $headers);
+        Carp::croak sprintf('headers must be HTTP::Headers or HasMethods["exists","get","set"]. %s', $headers);
     }
 
     if ($headers->isa('HTTP::Headers')) {
-        unless (defined $headers->header($http_field)) {
+        if (defined $headers->header($http_field)) {
+            if ($headers->header($http_field) eq OPT_OUT) {
+                $headers->header($http_field, undef)
+            }
+        }
+        else {
             $headers->header($http_field, $self->{$field})
         }
     }
-    elsif ($headers->can('exists') && $headers->can('set')) {
-        unless ($headers->exists($http_field)) {
+    elsif ($headers->can('exists') && $headers->can('get') && $headers->can('set')) {
+        if (defined $headers->get($http_field)) {
+            if ($headers->get($http_field) eq OPT_OUT) {
+                $headers->set($http_field, undef);
+            }
+        }
+        elsif (!$headers->exists($http_field)) {
             $headers->set($http_field, $self->{$field})
         }
     }
@@ -243,30 +255,13 @@ HTTP::SecureHeaders - manage security headers with many safe defaults
 =head1 DESCRIPTION
 
 HTTP::SecureHeaders manages HTTP headers to protect against XSS attacks, insecure connections, content type sniffing, etc.
-NOTE: To protect against these attacks, sanitization of user input values and other protections are also required.
-
-=head2 DEFAULT HEADERS
-
-By default, the following HTTP headers are set:
-
-    Content-Security-Policy: default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'
-    Strict-Transport-Security: max-age=631138519
-    X-Content-Type-Options: nosniff
-    X-Download-Options: noopen
-    X-Frame-Options: SAMEORIGIN
-    X-Permitted-Cross-Domain-Policies: none
-    X-XSS-Protection: 1; mode=block
-    Referrer-Policy: strict-origin-when-cross-origin,
-
-This default value refers to the following sites L<https://github.com/github/secure_headers#default-values>.
+B<NOTE>: To protect against these attacks, sanitization of user input values and other protections are also required.
 
 =head1 METHODS
 
-=over 4
+=head2 HTTP::SecureHeaders->new(%args)
 
-=item C<< HTTP::SecureHeaders->new(%args) >>
-
-Secure HTTP headers can be changed as follows:
+C<new> method is HTTP::SecureHeaders constructor. The following arguments are available.
 
     my $secure_headers = HTTP::SecureHeaders->new(
         content_security_policy           => "default-src 'self'",
@@ -279,12 +274,62 @@ Secure HTTP headers can be changed as follows:
         referrer_policy                   => 'no-referrer',
     );
 
+=head3 Default headers
 
-=item C<< $self->apply($headers) >>
+By default, the following HTTP headers are set.
+This default value refers to the following sites L<https://github.com/github/secure_headers#default-values>.
 
-Apply the value of the secure header to the given header object.
+    my $secure_headers = HTTP::SecureHeaders->new()
+    # =>
 
-HTTP header already set in $headers are not applied:
+    Content-Security-Policy: default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'
+    Strict-Transport-Security: max-age=631138519
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Frame-Options: SAMEORIGIN
+    X-Permitted-Cross-Domain-Policies: none
+    X-XSS-Protection: 1; mode=block
+    Referrer-Policy: strict-origin-when-cross-origin,
+
+
+=head3 Remove unnecessary HTTP header
+
+For unnessary HTTP header, use undef in the constructor.
+
+    my $secure_headers = HTTP::SecureHeaders->new(
+        content_security_policy => undef,
+    )
+
+    my $res = Plack::Response->new;
+    $secure_headers->apply($res->headers);
+    $res->header('Content-Security-Policy'); # => undef
+
+For temporarily unnecessary HTTP header, use OPT_OUT:
+
+    my $secure_headers = HTTP::SecureHeaders->new();
+
+    my $res = Plack::Response->new;
+    $res->header('Content-Security-Policy', HTTP::SecureHeaders::OPT_OUT);
+
+    $secure_headers->apply($res->headers);
+    $res->header('Content-Security-Policy'); # => undef
+
+B<NOTE>: If you use undef, HTTP::Headers cannot remove them.
+
+    my $secure_headers = HTTP::SecureHeaders->new();
+
+    my $res = Plack::Response->new;
+    $res->header('Content-Security-Policy', undef); # use undef instead of OPT_OUT
+
+    $secure_headers->apply($res->headers);
+    $res->header('Content-Security-Policy'); # => SAMEORIGIN / NO!!!
+
+=head2 $self->apply($headers)
+
+Apply the HTTP headers set in HTTP::SecureHeaders to $headers.
+$headers must be HTTP::Headers or Plack::Util::headers ( HasMethods['exists', 'get', 'set'] ).
+
+B<NOTE>: HTTP header already set in $headers are not applied:
 
     my $secure_headers = HTTP::SecureHeaders->new(
         'x_frame_options' => 'SAMEORIGIN',
@@ -294,27 +339,7 @@ HTTP header already set in $headers are not applied:
     $res->header('X-Frame-Options', 'DENY');
 
     $secure_headers->apply($res->headers);
-    $res->header('X-Frame-Options') # => DENY
-
-=back
-
-=head1 FAQ
-
-=over 4
-
-=item How do you remove HTTP header?
-
-Please set undef to HTTP header you want to remove:
-
-    my $secure_headers = HTTP::SecureHeaders->new(
-        content_security_policy => undef,
-    );
-
-    my $res = Plack::Response->new;
-
-    $secure_headers->apply($res->headers);
-
-    $res->header('Content-Security-Policy'); # => undef
+    $res->header('X-Frame-Options') # => DENY / NOT SAMEORIGIN!
 
 =head1 SEE ALSO
 
