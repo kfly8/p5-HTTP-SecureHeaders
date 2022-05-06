@@ -1,4 +1,9 @@
+use strict;
+use warnings;
 use Test::More;
+use Test::Requires qw(
+    Plack::Util
+);
 
 use HTTP::SecureHeaders;
 use Plack::Util;
