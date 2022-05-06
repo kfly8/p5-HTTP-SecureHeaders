@@ -33,13 +33,34 @@ $data
 # DESCRIPTION
 
 HTTP::SecureHeaders manages HTTP headers to protect against XSS attacks, insecure connections, content type sniffing, etc.
-NOTE: To protect against these attacks, sanitization of user input values and other protections are also required.
+**NOTE**: To protect against these attacks, sanitization of user input values and other protections are also required.
 
-## DEFAULT HEADERS
+# METHODS
 
-By default, the following HTTP headers are set:
+## HTTP::SecureHeaders->new(%args)
 
+`new` method is HTTP::SecureHeaders constructor. The following arguments are available.
+
+```perl
+my $secure_headers = HTTP::SecureHeaders->new(
+    content_security_policy           => "default-src 'self'",
+    strict_transport_security         => 'max-age=631138519; includeSubDomains',
+    x_content_type_options            => 'nosniff',
+    x_download_options                => 'noopen',
+    x_frame_options                   => 'DENY',
+    x_permitted_cross_domain_policies => 'none',
+    x_xss_protection                  => '1',
+    referrer_policy                   => 'no-referrer',
+);
 ```
+
+By default, the following HTTP headers are set.
+This default value refers to the following sites [https://github.com/github/secure\_headers#default-values](https://github.com/github/secure_headers#default-values).
+
+```perl
+my $secure_headers = HTTP::SecureHeaders->new()
+# =>
+
 Content-Security-Policy: default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'
 Strict-Transport-Security: max-age=631138519
 X-Content-Type-Options: nosniff
@@ -50,62 +71,64 @@ X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin,
 ```
 
-This default value refers to the following sites [https://github.com/github/secure\_headers#default-values](https://github.com/github/secure_headers#default-values).
+## $self->apply($headers)
 
-# METHODS
+Apply the HTTP headers set in HTTP::SecureHeaders to $headers.
+$headers must be HTTP::Headers or Plack::Util::headers ( HasMethods\['exists', 'get', 'set'\] ).
 
-- `HTTP::SecureHeaders->new(%args)`
+**NOTE**: HTTP header already set in $headers are not applied:
 
-    Secure HTTP headers can be changed as follows:
+```perl
+my $secure_headers = HTTP::SecureHeaders->new(
+    'x_frame_options' => 'SAMEORIGIN',
+);
 
-    ```perl
-    my $secure_headers = HTTP::SecureHeaders->new(
-        content_security_policy           => "default-src 'self'",
-        strict_transport_security         => 'max-age=631138519; includeSubDomains',
-        x_content_type_options            => 'nosniff',
-        x_download_options                => 'noopen',
-        x_frame_options                   => 'DENY',
-        x_permitted_cross_domain_policies => 'none',
-        x_xss_protection                  => '1',
-        referrer_policy                   => 'no-referrer',
-    );
-    ```
+my $res = Plack::Response->new;
+$res->header('X-Frame-Options', 'DENY');
 
-- `$self->apply($headers)`
+$secure_headers->apply($res->headers);
+$res->header('X-Frame-Options') # => DENY / NOT SAMEORIGIN!
+```
 
-    Apply the value of the secure header to the given header object.
+## NOTE
 
-    HTTP header already set in $headers are not applied:
+### Remove unnecessary HTTP header
 
-    ```perl
-    my $secure_headers = HTTP::SecureHeaders->new(
-        'x_frame_options' => 'SAMEORIGIN',
-    );
+For unnessary HTTP header, use undef in the constructor.
 
-    my $res = Plack::Response->new;
-    $res->header('X-Frame-Options', 'DENY');
+```perl
+my $secure_headers = HTTP::SecureHeaders->new(
+    content_security_policy => undef,
+)
 
-    $secure_headers->apply($res->headers);
-    $res->header('X-Frame-Options') # => DENY
-    ```
+my $res = Plack::Response->new;
+$secure_headers->apply($res->headers);
+$res->header('Content-Security-Policy'); # => undef
+```
 
-# FAQ
+For temporarily unnecessary HTTP header, use OPT\_OUT:
 
-- How do you remove HTTP header?
+```perl
+my $secure_headers = HTTP::SecureHeaders->new();
 
-    Please set undef to HTTP header you want to remove:
+my $res = Plack::Response->new;
+$res->header('Content-Security-Policy', HTTP::SecureHeaders::OPT_OUT);
 
-    ```perl
-    my $secure_headers = HTTP::SecureHeaders->new(
-        content_security_policy => undef,
-    );
+$secure_headers->apply($res->headers);
+$res->header('Content-Security-Policy'); # => undef
+```
 
-    my $res = Plack::Response->new;
+**NOTE**: If you use undef, HTTP::Headers cannot remove them.
 
-    $secure_headers->apply($res->headers);
+```perl
+my $secure_headers = HTTP::SecureHeaders->new();
 
-    $res->header('Content-Security-Policy'); # => undef
-    ```
+my $res = Plack::Response->new;
+$res->header('Content-Security-Policy', undef); # use undef instead of OPT_OUT
+
+$secure_headers->apply($res->headers);
+$res->header('Content-Security-Policy'); # => SAMEORIGIN / NO!!!
+```
 
 # SEE ALSO
 
@@ -122,11 +145,3 @@ it under the same terms as Perl itself.
 # AUTHOR
 
 kfly8 <kfly@cpan.org>
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 319:
-
-    You forgot a '=back' before '=head1'

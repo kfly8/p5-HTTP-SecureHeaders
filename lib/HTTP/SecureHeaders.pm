@@ -274,8 +274,6 @@ C<new> method is HTTP::SecureHeaders constructor. The following arguments are av
         referrer_policy                   => 'no-referrer',
     );
 
-=head3 Default headers
-
 By default, the following HTTP headers are set.
 This default value refers to the following sites L<https://github.com/github/secure_headers#default-values>.
 
@@ -291,6 +289,26 @@ This default value refers to the following sites L<https://github.com/github/sec
     X-XSS-Protection: 1; mode=block
     Referrer-Policy: strict-origin-when-cross-origin,
 
+
+=head2 $self->apply($headers)
+
+Apply the HTTP headers set in HTTP::SecureHeaders to $headers.
+$headers must be HTTP::Headers or Plack::Util::headers ( HasMethods['exists', 'get', 'set'] ).
+
+B<NOTE>: HTTP header already set in $headers are not applied:
+
+    my $secure_headers = HTTP::SecureHeaders->new(
+        'x_frame_options' => 'SAMEORIGIN',
+    );
+
+    my $res = Plack::Response->new;
+    $res->header('X-Frame-Options', 'DENY');
+
+    $secure_headers->apply($res->headers);
+    $res->header('X-Frame-Options') # => DENY / NOT SAMEORIGIN!
+
+
+=head2 NOTE
 
 =head3 Remove unnecessary HTTP header
 
@@ -324,22 +342,6 @@ B<NOTE>: If you use undef, HTTP::Headers cannot remove them.
     $secure_headers->apply($res->headers);
     $res->header('Content-Security-Policy'); # => SAMEORIGIN / NO!!!
 
-=head2 $self->apply($headers)
-
-Apply the HTTP headers set in HTTP::SecureHeaders to $headers.
-$headers must be HTTP::Headers or Plack::Util::headers ( HasMethods['exists', 'get', 'set'] ).
-
-B<NOTE>: HTTP header already set in $headers are not applied:
-
-    my $secure_headers = HTTP::SecureHeaders->new(
-        'x_frame_options' => 'SAMEORIGIN',
-    );
-
-    my $res = Plack::Response->new;
-    $res->header('X-Frame-Options', 'DENY');
-
-    $secure_headers->apply($res->headers);
-    $res->header('X-Frame-Options') # => DENY / NOT SAMEORIGIN!
 
 =head1 SEE ALSO
 
