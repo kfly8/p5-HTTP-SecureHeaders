@@ -284,6 +284,46 @@ Secure HTTP headers can be changed as follows:
 
 Apply the value of the secure header to the given header object.
 
+HTTP header already set in $headers are not applied:
+
+    my $secure_headers = HTTP::SecureHeaders->new(
+        'x_frame_options' => 'SAMEORIGIN',
+    );
+
+    my $res = Plack::Response->new;
+    $res->header('X-Frame-Options', 'DENY');
+
+    $secure_headers->apply($res->headers);
+    $res->header('X-Frame-Options') # => DENY
+
+=back
+
+=head1 FAQ
+
+=over 4
+
+=item How do you remove HTTP header?
+
+Please set undef to HTTP header you want to remove:
+
+    my $secure_headers = HTTP::SecureHeaders->new(
+        content_security_policy => undef,
+    );
+
+    my $res = Plack::Response->new;
+
+    $secure_headers->apply($res->headers);
+
+    $res->header('Content-Security-Policy'); # => undef
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<https://github.com/github/secure_headers>
+
+=item L<https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html>
+
 =back
 
 =head1 LICENSE

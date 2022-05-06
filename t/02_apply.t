@@ -151,6 +151,7 @@ subtest 'already set HTTP header' => sub {
 
         $secure_headers->apply($headers);
 
+        is $headers->get('X-Frame-Options'), 'DENY';
         is_deeply +{@$data}, {
             %$expected_headers,
             'X-Frame-Options' => "DENY",
@@ -162,6 +163,8 @@ subtest 'already set HTTP header' => sub {
         $res->header('X-Frame-Options', 'DENY');
 
         $secure_headers->apply($res->headers);
+
+        is $res->header('X-Frame-Options'), 'DENY';
         is_deeply +{ %{$res->headers} }, {
             %$lc_expected_headers,
             'x-frame-options' => "DENY",
