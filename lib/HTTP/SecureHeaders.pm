@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Carp ();
+use Scalar::Util ();
 
 our $VERSION = "0.01";
 
@@ -44,7 +45,10 @@ sub new {
             Carp::croak sprintf('cannot find check function. %s', "check_$field")
         }
 
-        unless (defined $value && $checker->($value)) {
+        # undef value is available for optout from headers
+        next unless defined $value;
+
+        unless ($checker->($value)) {
             Carp::croak sprintf('invalid HTTP header value. %s:%s', $field, $value);
         }
     }
@@ -66,8 +70,12 @@ sub _apply {
 
     my $http_field = $HTTP_FIELD_MAP{$field};
 
+    unless (Scalar::Util::blessed($headers)) {
+        Carp::croak sprintf('headers must be HTTP::Headers or HasMethods["exists","set"]. %s', $headers);
+    }
+
     if ($headers->isa('HTTP::Headers')) {
-        unless (exists $headers->{$http_field}) {
+        unless (defined $headers->header($http_field)) {
             $headers->header($http_field, $self->{$field})
         }
     }
@@ -101,7 +109,7 @@ sub _apply {
         'style-src'       => sub { 1 }, # serialized-source-list
         'style-src-elem'  => sub { 1 }, # serialized-source-list
         'style-src-attr'  => sub { 1 }, # serialized-source-list
-        'webrtc'          => sub { 1 }, # "'allow'" / "'block'"
+        'webrtc'          => sub { $_[0] eq "'allow'" or $_[0] eq "'block'" },
         'worker-src'      => sub { 1 }, # serialized-source-list
         'base-uri'        => sub { 1 }, # serialized-source-list
         'sandbox'         => sub { 1 }, # "" / token *( required-ascii-whitespace token ),
@@ -125,15 +133,15 @@ sub _apply {
 
         my @directives = split ';', $_[0];
         for my $directive (@directives) {
-            unless ($directive =~ m!\s*([A-Za-z0-9\-]+)\s([^\s;,][^;,]+)!) {
+            my ($name, $value) = $directive =~ m!\s?([A-Za-z0-9\-]+)\s([^\s;,][^;,]+)!;
+            unless ($name && $value) {
                 return !!0
             }
-            my ($directive_name, $directive_value) = ($1, $2);
-            my $checker = $directive_map->{$directive_name};
+            my $checker = $directive_map->{$name};
             unless ($checker) {
                 return !!0
             }
-            unless ($checker->($directive_value)) {
+            unless ($checker->($value)) {
                 return !!0
             }
         }
@@ -145,7 +153,7 @@ sub _apply {
 # refs https://datatracker.ietf.org/doc/html/rfc6797
 # refs https://www.chromium.org/hsts/
 sub check_strict_transport_security {
-    $_[0] =~ m!\Amax-age=(?:[0-9]+)(?:;\sincludeSubDomains)*(?:;\spreload)*\z!
+    $_[0] =~ m!\Amax-age=(?:[0-9]+)(?:\s?;\s?includeSubDomains)?(?:\s?;\s?preload)?\z!
 }
 
 # refs http://blogs.msdn.com/b/ie/archive/2008/07/02/ie8-security-part-v-comprehensive-protection.aspx
@@ -160,8 +168,9 @@ sub check_x_download_options {
 
 # refs https://www.rfc-editor.org/rfc/rfc7034#section-2
 sub check_x_frame_options {
-    ($_[0] eq 'SAMEORIGIN') or
-    ($_[0] eq 'DENY')
+    $_[0] eq 'SAMEORIGIN' or
+    $_[0] eq 'DENY'
+    # ALLOW-FROM # deprecated
 }
 
 # refs https://www.adobe.com/devnet-docs/acrobatetk/tools/AppSec/CrossDomain_PolicyFile_Specification.pdf
@@ -179,7 +188,6 @@ sub check_x_xss_protection {
 }
 
 # refs https://w3c.github.io/webappsec-referrer-policy/#referrer-policy-header
-# empty string cannot pass.
 {
     my $referrer_policy_values = {
         'strict-origin-when-cross-origin' => 1,
@@ -192,6 +200,7 @@ sub check_x_xss_protection {
         'unsafe-url'                      => 1,
     };
 
+    # empty string cannot pass.
     sub check_referrer_policy {
         exists $referrer_policy_values->{$_[0]}
     }
