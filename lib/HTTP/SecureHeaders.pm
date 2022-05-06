@@ -313,7 +313,7 @@ B<NOTE>: HTTP header already set in $headers are not applied:
 
 =head3 Remove unnecessary HTTP header
 
-For unnessary HTTP header, use undef in the constructor.
+For unnecessary HTTP header, use undef in the constructor.
 
     my $secure_headers = HTTP::SecureHeaders->new(
         content_security_policy => undef,

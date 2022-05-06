@@ -95,7 +95,7 @@ $res->header('X-Frame-Options') # => DENY / NOT SAMEORIGIN!
 
 ### Remove unnecessary HTTP header
 
-For unnessary HTTP header, use undef in the constructor.
+For unnecessary HTTP header, use undef in the constructor.
 
 ```perl
 my $secure_headers = HTTP::SecureHeaders->new(
