@@ -33,6 +33,7 @@ $data
 # DESCRIPTION
 
 HTTP::SecureHeaders manages HTTP headers to protect against XSS attacks, insecure connections, content type sniffing, etc.
+
 **NOTE**: To protect against these attacks, sanitization of user input values and other protections are also required.
 
 # METHODS
@@ -118,7 +119,7 @@ $secure_headers->apply($res->headers);
 $res->header('Content-Security-Policy'); # => undef
 ```
 
-**NOTE**: If you use undef, HTTP::Headers cannot remove them.
+**NOTE**: If you use undef instead of OPT\_OUT, HTTP::Headers cannot remove them.
 
 ```perl
 my $secure_headers = HTTP::SecureHeaders->new();

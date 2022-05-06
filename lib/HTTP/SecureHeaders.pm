@@ -255,6 +255,7 @@ HTTP::SecureHeaders - manage security headers with many safe defaults
 =head1 DESCRIPTION
 
 HTTP::SecureHeaders manages HTTP headers to protect against XSS attacks, insecure connections, content type sniffing, etc.
+
 B<NOTE>: To protect against these attacks, sanitization of user input values and other protections are also required.
 
 =head1 METHODS
@@ -332,7 +333,7 @@ For temporarily unnecessary HTTP header, use OPT_OUT:
     $secure_headers->apply($res->headers);
     $res->header('Content-Security-Policy'); # => undef
 
-B<NOTE>: If you use undef, HTTP::Headers cannot remove them.
+B<NOTE>: If you use undef instead of OPT_OUT, HTTP::Headers cannot remove them.
 
     my $secure_headers = HTTP::SecureHeaders->new();
 
