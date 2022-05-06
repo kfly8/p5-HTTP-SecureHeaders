@@ -49,6 +49,7 @@
       "test" : {
          "requires" : {
             "Module::Build::Tiny" : "0.035",
+            "Plack" : "0",
             "Test::More" : "0.98"
          }
       }
