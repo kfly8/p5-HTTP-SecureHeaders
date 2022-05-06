@@ -1,5 +1,5 @@
 name = "HTTP-SecureHeaders"
-badges = ["github-actions/test.yml"]
+badges = ["github-actions/test.yml","codecov","metacpan"]
 authority="cpan:KFLY"
 
 module_maker="ModuleBuildTiny"
