@@ -35,27 +35,26 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
+
       - name: Install dependencies
-        run: |
-          cpanm -nq --installdeps --with-develop --with-recommends .
+        run: cpm install -g --with-all
+
       - name: Install optional deps
         run: |
-          cpanm -nq HTTP::Headers
-          cpanm -nq HTTP::Headers::Fast
-          cpanm -nq Plack
-      - name: Build
-        run: |
-          perl Build.PL
-          ./Build
-      - name: Run test
-        run: ./Build test
+          cpm install -g HTTP::Headers
+          cpm install -g HTTP::Headers::Fast
+          cpm install -g Plack
+
+      - run: perl Build.PL
+      - run: ./Build
+      - run: ./Build test
 
       - name: Run coverage
         if: ${{ matrix.coverage }}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          cpanm -nq Devel::Cover Devel::Cover::Report::Codecov
+          cpm install -g Devel::Cover::Report::Coveralls
           cover -test -report codecov
 
   misspell:
