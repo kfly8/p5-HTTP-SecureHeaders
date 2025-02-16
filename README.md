@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/kfly8/p5-HTTP-SecureHeaders/actions/workflows/test.yml/badge.svg)](https://github.com/kfly8/p5-HTTP-SecureHeaders/actions) [![Coverage Status](http://codecov.io/github/kfly8/p5-HTTP-SecureHeaders/coverage.svg?branch=main)](https://codecov.io/github/kfly8/p5-HTTP-SecureHeaders?branch=main) [![MetaCPAN Release](https://badge.fury.io/pl/HTTP-SecureHeaders.svg)](https://metacpan.org/release/HTTP-SecureHeaders)
+[![Actions Status](https://github.com/kfly8/p5-HTTP-SecureHeaders/actions/workflows/test.yml/badge.svg)](https://github.com/kfly8/p5-HTTP-SecureHeaders/actions) [![Coverage Status](https://img.shields.io/coveralls/kfly8/p5-HTTP-SecureHeaders/main.svg?style=flat)](https://coveralls.io/r/kfly8/p5-HTTP-SecureHeaders?branch=main) [![MetaCPAN Release](https://badge.fury.io/pl/HTTP-SecureHeaders.svg)](https://metacpan.org/release/HTTP-SecureHeaders)
 # NAME
 
 HTTP::SecureHeaders - manage security headers with many safe defaults
