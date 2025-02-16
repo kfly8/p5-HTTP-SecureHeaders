@@ -63,7 +63,7 @@
          "web" : "https://github.com/kfly8/p5-HTTP-SecureHeaders"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_authority" : "cpan:KFLY",
    "x_contributors" : [
       "kobaken <kentafly88@gmail.com>"
