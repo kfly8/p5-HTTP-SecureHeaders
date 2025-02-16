@@ -55,7 +55,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           cpm install -g Devel::Cover::Report::Coveralls
-          cover -test -report codecov
+          cover -test -report coveralls -ignore_re '^/opt'
 
   misspell:
     runs-on: ubuntu-latest
