@@ -50,7 +50,7 @@ jobs:
       - name: Run coverage
         if: ${{ matrix.coverage }}
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cpm install -g Devel::Cover::Report::Coveralls
           cover -test -report coveralls -ignore_re '^/opt'
